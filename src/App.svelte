@@ -1,15 +1,21 @@
 <script lang="ts">
   import { createMatrixWithArrayValue, createMatrixWithStringValue, MatrixBuilder } from "./lib/data-matrix";
   import { extractSchemaFromObjects, type ObjectSchema } from "./lib/object-schema";
+  import { search } from 'jmespath';
 
   let textarea: HTMLTextAreaElement;
   let schema: ObjectSchema | null = $state.raw(null);
   let idKey: string = $state('');
   let valueKey: string = $state('');
   let dataMatrix: MatrixBuilder | null = $state.raw(null);
+  let query: string = $state('@');
+
+  function readJsonValue(): Record<string, any>[] {
+    return search(JSON.parse(textarea.value), query);
+  }
 
   function analyze() {
-    const objects: Record<string, any>[] = JSON.parse(textarea.value);
+    const objects = readJsonValue();
     schema = extractSchemaFromObjects(objects);
     idKey = schema.stringsKeys.values().find(() => true) || '';
     valueKey = schema.stringArraysKeys.values().find(() => true) || '';
@@ -27,6 +33,8 @@
 <main>
   <section>
     <textarea bind:this={textarea}></textarea>
+    <label for="query">JMESPath Query</label>
+    <input id="query" bind:value={query} />
     <button onclick={analyze}>Analyze</button>
   </section>
 
